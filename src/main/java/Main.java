@@ -1,4 +1,7 @@
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Main {
 
@@ -7,7 +10,8 @@ public class Main {
         for (int i = 0; i < texts.length; i++) {
             texts[i] = generateText("aab", 30_000);
         }
-        List<Thread> threadList = new ArrayList<>(texts.length);
+        List<Future> futureList = new ArrayList<>(texts.length);
+        final ExecutorService threadPool = Executors.newFixedThreadPool(texts.length);
 
         long startTs = System.currentTimeMillis(); // start time
 
