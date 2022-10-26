@@ -1,17 +1,14 @@
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 
 public class Main {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         String[] texts = new String[25];
         for (int i = 0; i < texts.length; i++) {
             texts[i] = generateText("aab", 30_000);
         }
-        List<FutureTask> futureList = new ArrayList<>(texts.length);
+        List<Future> futureList = new ArrayList<>(texts.length);
         final ExecutorService threadPool = Executors.newFixedThreadPool(texts.length);
 
         long startTs = System.currentTimeMillis(); // start time
@@ -19,30 +16,32 @@ public class Main {
 
         for (String text : texts) {
 
-            Thread thread = new Thread(
-                    () -> {
-                        int maxSize = 0;
-                        for (int i = 0; i < text.length(); i++) {
-                            for (int j = 0; j < text.length(); j++) {
-                                if (i >= j) {
-                                    continue;
-                                }
-                                boolean bFound = false;
-                                for (int k = i; k < j; k++) {
-                                    if (text.charAt(k) == 'b') {
-                                        bFound = true;
-                                        break;
-                                    }
-                                }
-                                if (!bFound && maxSize < j - i) {
-                                    maxSize = j - i;
-                                }
+            Callable<String> call = () -> {
+                int maxSize = 0;
+                for (int i = 0; i < text.length(); i++) {
+                    for (int j = 0; j < text.length(); j++) {
+                        if (i >= j) {
+                            continue;
+                        }
+                        boolean bFound = false;
+                        for (int k = i; k < j; k++) {
+                            if (text.charAt(k) == 'b') {
+                                bFound = true;
+                                break;
                             }
                         }
-                        System.out.println(text.substring(0, 100) + " -> " + maxSize);
+                        if (!bFound && maxSize < j - i) {
+                            maxSize = j - i;
+                        }
                     }
-            );
-            threadList.add(thread);
+                }
+//                    System.out.println(text.substring(0, 100) + " -> " + maxSize);
+
+                return text.substring(0, 100) + " -> " + maxSize;
+            };
+            Future futureTask = threadPool.submit(call);
+
+            futureList.add(futureTask);
             thread.start();
         }
         for (Thread thread : threadList) {
